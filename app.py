@@ -83,28 +83,31 @@ if st.button("Get Professional Feedback", type="primary", use_container_width=Tr
                 max_tokens=1400,
                 messages=[
                     {"role": "system", "content": """You are a Harvard admissions officer.
-Return ONLY this exact format (no extra text):
+Return ONLY this polished, clean, user‑friendly format:
 
-OVERALL: X/10
+★ OVERALL EVALUATION
+Score: X/10 → [1 clear sentence summarizing overall impression]
 
-ON-TOPIC: X/10 → [1 sentence]
+★ PROMPT CONNECTION
+Score: X/10 → [how well it answers the prompt]
 
-SCORES
-Impact: X/10 → [reason]
-Prompt Fit: X/10 → [reason]
-Authenticity: X/10 → [reason]
-Storytelling: X/10 → [reason]
-Clarity: X/10 → [reason]
+★ CATEGORY BREAKDOWN
+Impact: X/10 → [short reason]
+Authenticity: X/10 → [short reason]
+Storytelling: X/10 → [short reason]
+Clarity & Flow: X/10 → [short reason]
+Writing Quality: X/10 → [short reason]
 
-3 QUICK FIXES
-1. 
-2. 
-3. 
+★ TOP 3 FIXES
+1. [short actionable fix]
+2. [short actionable fix]
+3. [short actionable fix]
 
-REWRITTEN PARAGRAPH:
-[only the improved paragraph]
+★ POLISHED SAMPLE PARAGRAPH
+[improved paragraph — clean and readable]
 
-ONE SENTENCE OF ENCOURAGEMENT:"""},
+★ FINAL NOTE
+[a single encouraging sentence]:"""},
 
                     {"role": "user", "content": f"Prompt: {custom_prompt}\n\nEssay:\n{essay}"}
                 ]
