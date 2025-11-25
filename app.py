@@ -1,5 +1,5 @@
-# app.py — EssayBlitz v5 FINAL (Public, No API-key-free version)
-# Deployed on Render → https://essayblitz-1.onrender.com
+# app.py — EssayBlitz v6 — PUBLIC DEPLOY ONLY (No Sidebar, Env Var Token)
+# Deployed on Render — https://essayblitz-1.onrender.com
 
 import streamlit as st
 from openai import OpenAI
@@ -22,16 +22,11 @@ st.markdown("""
 st.markdown("<h1 style='text-align:center;'>EssayBlitz</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; font-size:22px;'>Free professional college essay feedback — in 5 seconds</p>", unsafe_allow_html=True)
 
-# ────────────────────── GET TOKEN (ENV VAR FIRST) ──────────────────────
-api_token = os.getenv("HF_TOKEN")  # ← Render automatically provides this
-
-# Optional sidebar only for LOCAL testing (will be hidden on public)
-with st.sidebar:
-    st.caption("Local dev only")
-    st.text_input("HF Token", type="password", value="", disabled=True)
+# ────────────────────── GET TOKEN FROM ENV VAR ONLY ──────────────────────
+api_token = os.getenv("HF_TOKEN")
 
 if not api_token:
-    st.error("Missing HF_TOKEN — add it in Render → Environment Variables")
+    st.error("Server error: Missing API key. Contact developer.")
     st.stop()
 
 client = OpenAI(api_key=api_token, base_url="https://router.huggingface.co/v1")
@@ -129,7 +124,7 @@ ONE SENTENCE OF ENCOURAGEMENT:"""},
                         st.markdown(f"<p style='text-align:center;font-size:21px;font-style:italic;color:#2c3e50;'>{enc}</p>", unsafe_allow_html=True)
 
             except Exception as e:
-                st.error("Temporary API hiccup — try again in 10 seconds")
+                st.error("API hiccup — try again in 10 seconds")
                 st.code(str(e))
 
 st.markdown("---")
