@@ -86,7 +86,7 @@ if st.button("Get Professional Feedback", type="primary", use_container_width=Tr
 Return ONLY this polished, clean, user‑friendly format:
 
 ★ OVERALL EVALUATION
-Score: X/10 → 1 clear sentence summarizing overall impression
+Score: X/10 → [1 clear sentence summarizing overall impression]
 
 ★ PROMPT CONNECTION
 Score: X/10 → [how well it answers the prompt]
@@ -215,4 +215,5 @@ Writing Quality: X/10 → [short reason]
 
 st.markdown("---")
 st.caption("Made with love by a high-school senior | 100% free forever | v4 – November 2025")
+
 
