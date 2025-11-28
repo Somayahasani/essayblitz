@@ -82,7 +82,7 @@ if st.button("Get Professional Feedback", type="primary", use_container_width=Tr
                 temperature=0.6,
                 max_tokens=1400,
                 messages=[
-                    {"role": "system", "content": """You are a Harvard admissions officer.
+                    {"role": "system", "content": """You are an admissions officer.
 Return ONLY this polished, clean, user‑friendly format:
 
 ★ OVERALL EVALUATION
@@ -215,5 +215,6 @@ Writing Quality: X/10 → [short reason]
 
 st.markdown("---")
 st.caption("Made with love by a high-school senior | 100% free forever | v4 – November 2025")
+
 
 
