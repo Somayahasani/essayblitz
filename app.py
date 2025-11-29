@@ -11,11 +11,30 @@ st.set_page_config(
     layout="centered"
 )
 
-# ─── STYLING ───
-st.markdown("""
+# ─── LIGHT/DARK THEME SELECT ───
+theme = st.sidebar.radio("Theme", ["Light", "Dark"])
+
+if theme == "Light":
+    bg_main = "#f0f2f6"
+    bg_card = "#ffffff"
+    text_color = "#000000"
+    secondary_text = "#555555"
+    shadow_color = "rgba(0,0,0,0.08)"
+elif theme == "Dark":
+    bg_main = "#121212"
+    bg_card = "#1f1f1f"
+    text_color = "#f5f5f5"
+    secondary_text = "#aaaaaa"
+    shadow_color = "rgba(255,255,255,0.05)"
+
+# ─── GLOBAL STYLING ───
+st.markdown(f"""
 <style>
-/* Gradient Title */
-h1 {
+body {{
+    background-color: {bg_main};
+    color: {text_color};
+}}
+h1 {{
     font-size: 62px !important;
     font-weight: 900 !important;
     background: linear-gradient(90deg, #4A00E0, #8E2DE2);
@@ -23,92 +42,50 @@ h1 {
     color: transparent;
     text-align: center;
     margin-bottom: 5px;
-}
-/* Paragraph under title */
-h2 {
+}}
+h2 {{
     text-align:center;
     font-size:20px;
-    color:#555;
+    color:{secondary_text};
     margin-top:0;
-}
-
-/* Card for inputs */
-.card {
+}}
+.card {{
     padding:25px;
     border-radius:18px;
-    background:white;
-    box-shadow:0 4px 18px rgba(0,0,0,0.08);
+    background:{bg_card};
+    box-shadow:0 4px 18px {shadow_color};
     margin-bottom:20px;
-}
-
-/* Textareas */
-textarea {
+}}
+textarea {{
     border-radius: 15px !important;
     border: 2px solid #dcdcdc !important;
     padding: 14px !important;
     font-size: 16px !important;
-}
-
-/* Score boxes */
-.bigfont {font-size: 52px !important; font-weight: bold; text-align: center; margin: 20px;}
-.score-good {background: linear-gradient(90deg, #d4edda, #c3e6cb); padding: 16px; border-radius: 16px; margin: 12px 0; border-left: 6px solid #28a745; color: black !important;}
-.score-ok   {background: linear-gradient(90deg, #fff3cd, #ffeaa7); padding: 16px; border-radius: 16px; margin: 12px 0; border-left: 6px solid #ffc107; color: black !important;}
-.score-bad  {background: linear-gradient(90deg, #f8d7da, #f5c6cb); padding: 16px; border-radius: 16px; margin: 12px 0; border-left: 6px solid #dc3545; color: black !important;}
-.fix {background:#f0f2f6; padding:15px; border-radius:12px; margin:8px 0; color: black;}
-
-/* Button style */
-div.stButton > button:first-child {
+    background-color: {bg_card} !important;
+    color: {text_color} !important;
+}}
+div.stButton>button:first-child {{
     background: linear-gradient(90deg, #6a11cb, #2575fc);
     color: white;
     border-radius: 12px;
     padding: 14px 0px;
     font-size: 20px;
     border: none;
-}
-div.stButton > button:first-child:hover {
-    box-shadow: 0 0 12px rgba(37,117,252,0.7);
-}
+}}
+div.stButton>button:first-child:hover {{
+    box-shadow:0 0 12px rgba(37,117,252,0.7);
+}}
+.bigfont {{font-size: 52px !important; font-weight: bold; text-align: center; margin: 20px;}}
+.score-good {{background: linear-gradient(90deg, #d4edda, #c3e6cb); padding:16px; border-radius:16px; margin:12px 0; border-left:6px solid #28a745; color:black !important;}}
+.score-ok {{background: linear-gradient(90deg, #fff3cd, #ffeaa7); padding:16px; border-radius:16px; margin:12px 0; border-left:6px solid #ffc107; color:black !important;}}
+.score-bad {{background: linear-gradient(90deg, #f8d7da, #f5c6cb); padding:16px; border-radius:16px; margin:12px 0; border-left:6px solid #dc3545; color:black !important;}}
+.fix {{background:{bg_main}; padding:15px; border-radius:12px; margin:8px 0; color:{text_color};}}
 </style>
 """, unsafe_allow_html=True)
 
 # ─── HEADER ───
 st.markdown("<h1>EssayBlitz v4</h1>", unsafe_allow_html=True)
 st.markdown("<h2>AI-powered essay feedback, fast & elegant</h2>", unsafe_allow_html=True)
-
-# ─── LIGHT/DARK MODE TOGGLE ───
-theme = st.sidebar.radio("Theme", ["Light", "Dark"])
-if theme == "Dark":
-    st.markdown("""
-    <style>
-        /* Background and text */
-        .main, .block-container {
-            background-color: #121212 !important;
-            color: white !important;
-        }
-        textarea, input, .stTextInput>div>input {
-            background-color: #1e1e1e !important;
-            color: white !important;
-        }
-        .card {
-            background: #1f1f1f !important;
-            box-shadow: 0 4px 18px rgba(255,255,255,0.05);
-        }
-        .stButton>button {
-            background: linear-gradient(90deg, #6a11cb, #2575fc);
-            color: white;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-    <style>
-        .main, .block-container { background-color:white !important; color:black !important; }
-        textarea, input, .stTextInput>div>input { background-color: #fff !important; color: black !important; }
-        .card { background: white !important; box-shadow:0 4px 18px rgba(0,0,0,0.08); }
-        .stButton>button { background: linear-gradient(90deg, #6a11cb, #2575fc); color:white; }
-    </style>
-    """, unsafe_allow_html=True)
-
 
 # ─── API CONFIG ───
 api_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN") or os.getenv("OPENAI_API_KEY")
@@ -122,16 +99,13 @@ client = OpenAI(api_key=api_token.strip(), base_url="https://router.huggingface.
 # ─── INPUTS ───
 with st.container():
     st.markdown("<div class='card'>", unsafe_allow_html=True)
-
     col1, col2 = st.columns([2,1])
-
     with col1:
         essay = st.text_area(
             "Your full essay",
             height=380,
             placeholder="Paste your essay here… (minimum 80 words)"
         )
-
     with col2:
         custom_prompt = st.text_area(
             "Exact prompt you’re answering",
@@ -140,7 +114,6 @@ with st.container():
         )
         if not custom_prompt.strip():
             custom_prompt = "Free choice / no specific prompt"
-
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ─── HELPER FUNCTION ───
@@ -149,16 +122,12 @@ def extract_score(text):
     if not m:
         m = re.search(r"^(\d+(?:\.\d+)?)(?!.*\d)", text)
     if m:
-        try:
-            return float(m.group(1))
-        except:
-            return None
+        try: return float(m.group(1))
+        except: return None
     m = re.search(r"(\d+(?:\.\d+)?)", text)
     if m:
-        try:
-            return float(m.group(1))
-        except:
-            return None
+        try: return float(m.group(1))
+        except: return None
     return None
 
 # ─── BUTTON ───
@@ -171,7 +140,7 @@ if st.button("Get Professional Feedback", type="primary", use_container_width=Tr
     word_count = len(essay.split())
     est_minutes = max(1, math.ceil(word_count / 200))
 
-    # ─── SIDEBAR STATS ───
+    # Sidebar stats
     st.sidebar.header("Essay Stats")
     st.sidebar.metric("Word Count", word_count)
     st.sidebar.metric("Reading Time", f"{est_minutes} min")
@@ -183,7 +152,7 @@ if st.button("Get Professional Feedback", type="primary", use_container_width=Tr
                 temperature=0.6,
                 max_tokens=1400,
                 messages=[
-                    {"role": "system", "content": """
+                    {"role":"system","content":"""
 You are a professional admissions officer. Return ONLY this polished, concise, user-friendly format:
 
 ★ OVERALL EVALUATION
@@ -210,21 +179,17 @@ Writing Quality: X/10 → [short reason]
 ★ FINAL NOTE
 [a single encouraging sentence]
 """}, 
-                    {"role": "user", "content": f"Prompt: {custom_prompt}\n\nEssay:\n{essay}"}
+                    {"role":"user","content":f"Prompt: {custom_prompt}\n\nEssay:\n{essay}"}
                 ]
             )
 
             feedback = completion.choices[0].message.content.strip()
             st.success("Feedback ready!")
             st.balloons()
-
-            # Word count & reading time display
             st.markdown(f"**Word count:** {word_count} words — **Estimated reading time:** {est_minutes} min")
             st.caption("Note: Feedback is automated and meant to guide improvement.")
 
             lines = [line.rstrip() for line in feedback.split("\n")]
-
-            # OVERALL SCORE
             overall_shown = False
             for line in lines:
                 if line.strip().startswith("OVERALL:"):
@@ -233,64 +198,53 @@ Writing Quality: X/10 → [short reason]
                     overall_shown = True
                     break
             if not overall_shown:
-                st.warning("OVERALL score not found in model output. Displaying raw feedback below.")
+                st.warning("OVERALL score not found in model output.")
 
-            i = 0
-            while i < len(lines):
-                line = lines[i].strip()
+            i=0
+            while i<len(lines):
+                line=lines[i].strip()
                 if not line:
-                    i += 1
+                    i+=1
                     continue
                 if line.startswith("ON-TOPIC:"):
                     st.markdown(f"**{line}**")
-                    i += 1
+                    i+=1
                     continue
                 if any(line.startswith(prefix) for prefix in ("Impact:", "Prompt Fit:", "Authenticity:", "Storytelling:", "Clarity:")):
-                    parts = line.split(":",1)
-                    title = parts[0].strip()
-                    rest = parts[1].strip()
-                    score_val = extract_score(rest)
+                    parts=line.split(":",1)
+                    title=parts[0].strip()
+                    rest=parts[1].strip()
+                    score_val=extract_score(rest)
                     if score_val is not None:
-                        if score_val >= 9:
-                            st.markdown(f"<div class='score-good'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                        elif score_val >= 7:
-                            st.markdown(f"<div class='score-ok'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"<div class='score-bad'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                        # Progress bar
-                        st.progress(min(score_val/10, 1.0))
+                        if score_val>=9: st.markdown(f"<div class='score-good'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                        elif score_val>=7: st.markdown(f"<div class='score-ok'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                        else: st.markdown(f"<div class='score-bad'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                        st.progress(min(score_val/10,1.0))
                     else:
                         st.markdown(f"<div class='fix'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                    i += 1
+                    i+=1
                     continue
-                if line == "3 QUICK FIXES":
-                    with st.expander("3 QUICK FIXES"):
-                        i += 1
-                        continue
+                if line=="3 QUICK FIXES":
+                    with st.expander("3 QUICK FIXES"): i+=1; continue
                 if re.match(r"^\d+\.\s+", line):
                     st.markdown(f"<div class='fix'>{line}</div>", unsafe_allow_html=True)
-                    i += 1
+                    i+=1
                     continue
                 if line.startswith("REWRITTEN PARAGRAPH:"):
                     para_lines=[]
                     j=i+1
-                    while j < len(lines) and not lines[j].startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
-                        para_lines.append(lines[j])
-                        j+=1
+                    while j<len(lines) and not lines[j].startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
+                        para_lines.append(lines[j]); j+=1
                     para="\n".join(para_lines).strip()
                     if para:
                         with st.expander("Polished Sample Paragraph"):
-                            st.markdown(f"<div style='background:#e8f4fd; padding:18px; border-radius:14px; color:black;'>{para}</div>", unsafe_allow_html=True)
-                    i=j
-                    continue
+                            st.markdown(f"<div style='background:#e8f4fd; padding:18px; border-radius:14px; color:{text_color};'>{para}</div>", unsafe_allow_html=True)
+                    i=j; continue
                 if line.startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
                     enc=line.replace("ONE SENTENCE OF ENCOURAGEMENT:","").strip()
-                    if not enc and i+1<len(lines):
-                        enc=lines[i+1].strip()
-                        i+=1
+                    if not enc and i+1<len(lines): enc=lines[i+1].strip(); i+=1
                     st.markdown(f"<p style='text-align:center; font-size:20px; font-style:italic; color:#1e3799;'>{enc}</p>", unsafe_allow_html=True)
-                    i+=1
-                    continue
+                    i+=1; continue
                 st.write(line)
                 i+=1
 
@@ -300,10 +254,9 @@ Writing Quality: X/10 → [short reason]
 
 # ─── FOOTER ───
 st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown("""
-<p style='text-align:center; color:#888; font-size:14px;'>
+st.markdown(f"""
+<p style='text-align:center; color:{secondary_text}; font-size:14px;'>
 Made with ❤️ by a high-school senior — 100% free forever  
 <br>v4 • November 2025
 </p>
 """, unsafe_allow_html=True)
-
