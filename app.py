@@ -4,161 +4,76 @@ import math
 import streamlit as st
 from openai import OpenAI
 
-st.set_page_config(page_title="EssayBlitz v4", page_icon="⭐", layout="centered")
+st.set_page_config(page_title="EssayBlitz v4", page_icon="star", layout="centered")
 
-# ─── DARK THEME CSS ───
-bg = "#1b1b1b"
-card_bg = "#252525"
-text_color = "#e0e0e0"
-secondary_text = "#aaaaaa"
-shadow = "rgba(0,0,0,0.4)"
-button_bg = "linear-gradient(90deg, #6a11cb, #2575fc)"
-
-st.markdown(f"""
+# Fixed CSS — text is now BLACK inside colored boxes
+st.markdown("""
 <style>
-body {{
-    background-color: {bg};
-    color: {text_color};
-    font-family: "Segoe UI", sans-serif;
-}}
-h1 {{
-    font-size: 56px !important;
-    font-weight: 900;
-    background: linear-gradient(90deg, #4A00E0, #8E2DE2);
-    -webkit-background-clip: text;
-    color: transparent;
-    text-align: center;
-    margin-bottom: 0;
-}}
-h2 {{
-    text-align:center;
-    font-size:20px;
-    color:{secondary_text};
-    margin-top:0;
-}}
-.card {{
-    padding:25px;
-    border-radius:18px;
-    background:{card_bg};
-    box-shadow:0 4px 20px {shadow};
-    margin-bottom:20px;
-}}
-textarea {{
-    border-radius: 12px !important;
-    border: 1px solid #dcdcdc !important;
-    padding: 12px !important;
-    font-size: 16px !important;
-    background-color: {card_bg} !important;
-    color: {text_color} !important;
-}}
-div.stButton>button:first-child {{
-    background: {button_bg};
-    color: white;
-    border-radius: 12px;
-    padding: 14px 0;
-    font-size: 18px;
-    font-weight: 600;
-    border: none;
-}}
-div.stButton>button:first-child:hover {{
-    box-shadow:0 0 14px rgba(37,117,252,0.6);
-}}
-.bigfont {{
-    font-size: 52px !important; 
-    font-weight: bold; 
-    text-align: center; 
-    margin: 20px;
-}}
-.score-good {{
-    background: linear-gradient(90deg, #d4edda, #c3e6cb); 
-    padding:16px; border-radius:16px; margin:12px 0; 
-    border-left:6px solid #28a745; color:black !important;
-}}
-.score-ok {{
-    background: linear-gradient(90deg, #fff3cd, #ffeaa7); 
-    padding:16px; border-radius:16px; margin:12px 0; 
-    border-left:6px solid #ffc107; color:black !important;
-}}
-.score-bad {{
-    background: linear-gradient(90deg, #f8d7da, #f5c6cb); 
-    padding:16px; border-radius:16px; margin:12px 0; 
-    border-left:6px solid #dc3545; color:black !important;
-}}
-.fix {{
-    background:{bg}; 
-    padding:15px; 
-    border-radius:12px; 
-    margin:8px 0; 
-    color:{text_color};
-}}
+    .bigfont {font-size: 52px !important; font-weight: bold; text-align: center; margin: 20px;}
+    .score-good {background: linear-gradient(90deg, #d4edda, #c3e6cb); padding: 16px; border-radius: 16px; margin: 12px 0; border-left: 6px solid #28a745; color: black !important;}
+    .score-ok   {background: linear-gradient(90deg, #fff3cd, #ffeaa7); padding: 16px; border-radius: 16px; margin: 12px 0; border-left: 6px solid #ffc107; color: black !important;}
+    .score-bad  {background: linear-gradient(90deg, #f8d7da, #f5c6cb); padding: 16px; border-radius: 16px; margin: 12px 0; border-left: 6px solid #dc3545; color: black !important;}
+    .fix {background:#f0f2f6; padding:15px; border-radius:12px; margin:8px 0; color: black;}
 </style>
 """, unsafe_allow_html=True)
 
-# ─── HEADER ───
-st.markdown("<h1>EssayBlitz v4</h1>", unsafe_allow_html=True)
-st.markdown("<h2>AI-powered essay feedback — fast, polished, professional</h2>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;'>EssayBlitz v4</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; font-size:20px;'>Professional college essay feedback — free & beautiful</p>", unsafe_allow_html=True)
 
-# ─── API CONFIG ───
+# ─── API CONFIG (no user input) ───
+# The app will read the API token from environment variables when deployed.
+# Set HF_TOKEN (preferred) or OPENAI_API_KEY in your deployment secrets.
 api_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN") or os.getenv("OPENAI_API_KEY")
+
 if not api_token:
     st.sidebar.header("API Key")
-    st.sidebar.error("No API token found in environment. Set HF_TOKEN or OPENAI_API_KEY.")
+    st.sidebar.error("No API token found in environment. Set HF_TOKEN or OPENAI_API_KEY in your deployment secrets.")
     st.stop()
 
+# Use the HF router by default if you use Hugging Face inference.
 client = OpenAI(api_key=api_token.strip(), base_url="https://router.huggingface.co/v1")
 
 # ─── INPUTS ───
-with st.container():
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([2, 1])
 
-    essay_placeholder = "Paste your essay here… (minimum 80 words)"
-    prompt_placeholder = "e.g.\nPrompt 5: Discuss an accomplishment…\nor\nWhy Stanford?"
+with col1:
+    essay = st.text_area("Your full essay", height=380, placeholder="Paste your essay here… (minimum 80 words)")
 
-    with col1:
-        essay = st.text_area(
-            "Your full essay",
-            height=380,
-            placeholder=essay_placeholder,
-            key="essay_input"
-        )
+with col2:
+    custom_prompt = st.text_area("Exact prompt you’re answering", height=200,
+                                 placeholder="e.g.\nPrompt 5: Discuss an accomplishment…\nor\nWhy Stanford?")
+    if not custom_prompt.strip():
+        custom_prompt = "Free choice / no specific prompt"
 
-    with col2:
-        custom_prompt = st.text_area(
-            "Exact prompt you’re answering",
-            height=200,
-            placeholder=prompt_placeholder,
-            key="prompt_input"
-        )
-        if not custom_prompt.strip():
-            custom_prompt = "Free choice / no specific prompt"
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# ─── HELPER FUNCTION ───
+# Helper: safe float extraction from strings like '8.5/10' or '9/10' or just '8.5'
 def extract_score(text):
+    # try to find a number (integer or decimal) before a '/10' or standalone
     m = re.search(r"(\d+(?:\.\d+)?)\s*/\s*10", text)
     if not m:
         m = re.search(r"^(\d+(?:\.\d+)?)(?!.*\d)", text)
     if m:
-        try: return float(m.group(1))
-        except: return None
+        try:
+            return float(m.group(1))
+        except Exception:
+            return None
+    # fallback: any number anywhere
     m = re.search(r"(\d+(?:\.\d+)?)", text)
     if m:
-        try: return float(m.group(1))
-        except: return None
+        try:
+            return float(m.group(1))
+        except Exception:
+            return None
     return None
 
-# ─── FEEDBACK BUTTON ───
+# ─── BIG BUTTON ───
 if st.button("Get Professional Feedback", type="primary", use_container_width=True):
     if len(essay.strip()) < 80:
         st.warning("Essay too short — need at least 80 words")
         st.stop()
+
+    # Helpful metadata for the user (always shown)
     word_count = len(essay.split())
-    est_minutes = max(1, math.ceil(word_count / 200))
-    st.sidebar.header("Essay Stats")
-    st.sidebar.metric("Word Count", word_count)
-    st.sidebar.metric("Reading Time", f"{est_minutes} min")
+    est_minutes = max(1, math.ceil(word_count / 200))  # ~200 wpm reading speed
 
     with st.spinner("Top admissions officer is reading your essay…"):
         try:
@@ -167,8 +82,8 @@ if st.button("Get Professional Feedback", type="primary", use_container_width=Tr
                 temperature=0.6,
                 max_tokens=1400,
                 messages=[
-                    {"role":"system","content":"""
-You are a professional admissions officer. Return ONLY this polished, concise, user-friendly format:
+                    {"role": "system", "content": """You are a professional admissions officer.
+Return ONLY this polished, concise, user‑friendly format:
 
 ★ OVERALL EVALUATION
 Score: X/10 → [1 clear sentence summarizing overall impression]
@@ -192,29 +107,111 @@ Writing Quality: X/10 → [short reason]
 [improved paragraph — clean and readable]
 
 ★ FINAL NOTE
-[a single encouraging sentence]
-"""}, 
-                    {"role":"user","content":f"Prompt: {custom_prompt}\n\nEssay:\n{essay}"}
+[a single encouraging sentence]:"""},
+
+                    {"role": "user", "content": f"Prompt: {custom_prompt}\n\nEssay:\n{essay}"}
                 ]
             )
             feedback = completion.choices[0].message.content.strip()
+
+            # ─── GORGEOUS DISPLAY (text now perfectly visible) ───
             st.success("Feedback ready!")
             st.balloons()
-            st.markdown(f"**Word count:** {word_count} words — **Estimated reading time:** {est_minutes} min")
-            st.caption("Note: Feedback is automated and meant to guide improvement.")
 
-            lines = [line.rstrip() for line in feedback.split("\n")]
+            # show metadata to user (necessary info)
+            st.markdown(f"**Word count:** {word_count} words — **Estimated reading time:** {est_minutes} minute(s)")
+            st.caption("Note: Feedback is automated and meant to guide improvement. For submissions, always double-check originality and school-specific requirements.")
+
+            lines = [line.rstrip() for line in feedback.split('\n')]
+
+            # Overall score
+            overall_shown = False
             for line in lines:
-                st.markdown(f"<div class='fix'>{line}</div>", unsafe_allow_html=True)
+                if line.strip().startswith("OVERALL:"):
+                    score = line.split(":", 1)[1].strip()
+                    st.markdown(f"<div class='bigfont'>{score}</div>", unsafe_allow_html=True)
+                    overall_shown = True
+                    break
+            if not overall_shown:
+                st.warning("OVERALL score not found in model output. Displaying raw feedback below.")
+
+            # iterate and display
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+                if not line:
+                    i += 1
+                    continue
+
+                if line.startswith("ON-TOPIC:"):
+                    st.markdown(f"**{line}**")
+                    i += 1
+                    continue
+
+                # SCORES block lines like 'Impact: 8.5/10 → reason'
+                if any(line.startswith(prefix) for prefix in ("Impact:", "Prompt Fit:", "Authenticity:", "Storytelling:", "Clarity:")):
+                    parts = line.split(":", 1)
+                    title = parts[0].strip()
+                    rest = parts[1].strip()
+                    score_val = extract_score(rest)
+                    if score_val is not None:
+                        # style thresholds work on floats now
+                        if score_val >= 9.0:
+                            st.markdown(f"<div class='score-good'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                        elif score_val >= 7.0:
+                            st.markdown(f"<div class='score-ok'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<div class='score-bad'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<div class='fix'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                    i += 1
+                    continue
+
+                if line == "3 QUICK FIXES":
+                    st.markdown("**3 QUICK FIXES**")
+                    i += 1
+                    continue
+
+                # numbered quick fixes
+                if re.match(r"^\d+\.\s+", line):
+                    st.markdown(f"<div class='fix'>{line}</div>", unsafe_allow_html=True)
+                    i += 1
+                    continue
+
+                if line.startswith("REWRITTEN PARAGRAPH:"):
+                    # collect all following lines until ONE SENTENCE OF ENCOURAGEMENT or end
+                    para_lines = []
+                    j = i + 1
+                    while j < len(lines) and not lines[j].startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
+                        para_lines.append(lines[j])
+                        j += 1
+                    para = "\n".join(para_lines).strip()
+                    if para:
+                        st.markdown("**BEST PARAGRAPH REWRITTEN**")
+                        st.markdown(f"<div style='background:#e8f4fd; padding:18px; border-radius:14px; color:black;'>{para}</div>", unsafe_allow_html=True)
+                    i = j
+                    continue
+
+                if line.startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
+                    enc = line.replace("ONE SENTENCE OF ENCOURAGEMENT:", "").strip()
+                    if not enc:
+                        # maybe the sentence is on next line
+                        if i + 1 < len(lines):
+                            enc = lines[i+1].strip()
+                            i += 1
+                    st.markdown(f"<p style='text-align:center; font-size:20px; font-style:italic; color:#1e3799;'>{enc}</p>", unsafe_allow_html=True)
+                    i += 1
+                    continue
+
+                # fallback: show any other line as plain text (but avoid duplicating numbered fixes)
+                if line:
+                    st.write(line)
+                i += 1
 
         except Exception as e:
-            st.error("An API or parsing error occurred.")
+            # Give actionable error info but avoid telling the user to "click again in 10 seconds"
+            st.error("An API or parsing error occurred. Check deployment secret and model output format.")
             st.code(str(e))
 
-# ─── FOOTER ───
-st.markdown(f"""
-<p style='text-align:center; color:{secondary_text}; font-size:14px;'>
-Made with ❤️ by a high-school senior — 100% free forever  
-<br>v4 • November 2025
-</p>
-""", unsafe_allow_html=True)
+st.markdown("---")
+st.caption("Made with love by a high-school senior | 100% free forever | v4 – November 2025")
