@@ -4,30 +4,26 @@ import math
 import streamlit as st
 from openai import OpenAI
 
-# ─── PAGE CONFIG ───
-st.set_page_config(
-    page_title="EssayBlitz v4",
-    page_icon="⭐",
-    layout="centered"
-)
+st.set_page_config(page_title="EssayBlitz v4", page_icon="⭐", layout="centered")
 
-# ─── LIGHT/DARK THEME SELECT ───
+# ─── SOFT LIGHT/DARK THEME ───
 theme = st.sidebar.radio("Theme", ["Light", "Dark"])
 
+# Soft colors
 if theme == "Light":
-    bg_main = "#f0f2f6"
-    bg_card = "#ffffff"
-    text_color = "#000000"
+    bg_main = "#f5f5f7"         # soft grayish background
+    card_bg = "#ffffff"          # white cards
+    text_color = "#1a1a1a"       # dark gray text
     secondary_text = "#555555"
-    shadow_color = "rgba(0,0,0,0.08)"
+    shadow = "rgba(0,0,0,0.08)"
 elif theme == "Dark":
-    bg_main = "#121212"
-    bg_card = "#1f1f1f"
-    text_color = "#f5f5f5"
+    bg_main = "#1a1a1a"          # soft dark gray
+    card_bg = "#252525"          # slightly lighter card
+    text_color = "#eaeaea"       # light gray text
     secondary_text = "#aaaaaa"
-    shadow_color = "rgba(255,255,255,0.05)"
+    shadow = "rgba(0,0,0,0.4)"
 
-# ─── GLOBAL STYLING ───
+# ─── GLOBAL CSS ───
 st.markdown(f"""
 <style>
 body {{
@@ -35,13 +31,13 @@ body {{
     color: {text_color};
 }}
 h1 {{
-    font-size: 62px !important;
+    font-size: 60px !important;
     font-weight: 900 !important;
     background: linear-gradient(90deg, #4A00E0, #8E2DE2);
     -webkit-background-clip: text;
     color: transparent;
     text-align: center;
-    margin-bottom: 5px;
+    margin-bottom: 0;
 }}
 h2 {{
     text-align:center;
@@ -52,24 +48,24 @@ h2 {{
 .card {{
     padding:25px;
     border-radius:18px;
-    background:{bg_card};
-    box-shadow:0 4px 18px {shadow_color};
+    background:{card_bg};
+    box-shadow:0 4px 18px {shadow};
     margin-bottom:20px;
 }}
 textarea {{
-    border-radius: 15px !important;
-    border: 2px solid #dcdcdc !important;
-    padding: 14px !important;
+    border-radius: 12px !important;
+    border: 1px solid #dcdcdc !important;
+    padding: 12px !important;
     font-size: 16px !important;
-    background-color: {bg_card} !important;
+    background-color: {card_bg} !important;
     color: {text_color} !important;
 }}
 div.stButton>button:first-child {{
     background: linear-gradient(90deg, #6a11cb, #2575fc);
     color: white;
-    border-radius: 12px;
-    padding: 14px 0px;
-    font-size: 20px;
+    border-radius: 10px;
+    padding: 12px 0;
+    font-size: 18px;
     border: none;
 }}
 div.stButton>button:first-child:hover {{
@@ -85,7 +81,7 @@ div.stButton>button:first-child:hover {{
 
 # ─── HEADER ───
 st.markdown("<h1>EssayBlitz v4</h1>", unsafe_allow_html=True)
-st.markdown("<h2>AI-powered essay feedback, fast & elegant</h2>", unsafe_allow_html=True)
+st.markdown("<h2>AI-powered essay feedback — fast, polished, professional</h2>", unsafe_allow_html=True)
 
 # ─── API CONFIG ───
 api_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN") or os.getenv("OPENAI_API_KEY")
@@ -130,21 +126,17 @@ def extract_score(text):
         except: return None
     return None
 
-# ─── BUTTON ───
+# ─── FEEDBACK BUTTON ───
 if st.button("Get Professional Feedback", type="primary", use_container_width=True):
-
     if len(essay.strip()) < 80:
         st.warning("Essay too short — need at least 80 words")
         st.stop()
-
     word_count = len(essay.split())
     est_minutes = max(1, math.ceil(word_count / 200))
-
-    # Sidebar stats
     st.sidebar.header("Essay Stats")
     st.sidebar.metric("Word Count", word_count)
     st.sidebar.metric("Reading Time", f"{est_minutes} min")
-
+    
     with st.spinner("Top admissions officer is reading your essay…"):
         try:
             completion = client.chat.completions.create(
@@ -182,78 +174,21 @@ Writing Quality: X/10 → [short reason]
                     {"role":"user","content":f"Prompt: {custom_prompt}\n\nEssay:\n{essay}"}
                 ]
             )
-
             feedback = completion.choices[0].message.content.strip()
             st.success("Feedback ready!")
             st.balloons()
             st.markdown(f"**Word count:** {word_count} words — **Estimated reading time:** {est_minutes} min")
             st.caption("Note: Feedback is automated and meant to guide improvement.")
-
+            
             lines = [line.rstrip() for line in feedback.split("\n")]
-            overall_shown = False
             for line in lines:
-                if line.strip().startswith("OVERALL:"):
-                    score = line.split(":",1)[1].strip()
-                    st.markdown(f"<div class='bigfont'>{score}</div>", unsafe_allow_html=True)
-                    overall_shown = True
-                    break
-            if not overall_shown:
-                st.warning("OVERALL score not found in model output.")
-
-            i=0
-            while i<len(lines):
-                line=lines[i].strip()
-                if not line:
-                    i+=1
-                    continue
-                if line.startswith("ON-TOPIC:"):
-                    st.markdown(f"**{line}**")
-                    i+=1
-                    continue
-                if any(line.startswith(prefix) for prefix in ("Impact:", "Prompt Fit:", "Authenticity:", "Storytelling:", "Clarity:")):
-                    parts=line.split(":",1)
-                    title=parts[0].strip()
-                    rest=parts[1].strip()
-                    score_val=extract_score(rest)
-                    if score_val is not None:
-                        if score_val>=9: st.markdown(f"<div class='score-good'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                        elif score_val>=7: st.markdown(f"<div class='score-ok'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                        else: st.markdown(f"<div class='score-bad'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                        st.progress(min(score_val/10,1.0))
-                    else:
-                        st.markdown(f"<div class='fix'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                    i+=1
-                    continue
-                if line=="3 QUICK FIXES":
-                    with st.expander("3 QUICK FIXES"): i+=1; continue
-                if re.match(r"^\d+\.\s+", line):
-                    st.markdown(f"<div class='fix'>{line}</div>", unsafe_allow_html=True)
-                    i+=1
-                    continue
-                if line.startswith("REWRITTEN PARAGRAPH:"):
-                    para_lines=[]
-                    j=i+1
-                    while j<len(lines) and not lines[j].startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
-                        para_lines.append(lines[j]); j+=1
-                    para="\n".join(para_lines).strip()
-                    if para:
-                        with st.expander("Polished Sample Paragraph"):
-                            st.markdown(f"<div style='background:#e8f4fd; padding:18px; border-radius:14px; color:{text_color};'>{para}</div>", unsafe_allow_html=True)
-                    i=j; continue
-                if line.startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
-                    enc=line.replace("ONE SENTENCE OF ENCOURAGEMENT:","").strip()
-                    if not enc and i+1<len(lines): enc=lines[i+1].strip(); i+=1
-                    st.markdown(f"<p style='text-align:center; font-size:20px; font-style:italic; color:#1e3799;'>{enc}</p>", unsafe_allow_html=True)
-                    i+=1; continue
-                st.write(line)
-                i+=1
-
+                st.markdown(f"<div class='fix'>{line}</div>", unsafe_allow_html=True)
+            
         except Exception as e:
-            st.error("An API or parsing error occurred. Check deployment secret and model output format.")
+            st.error("An API or parsing error occurred.")
             st.code(str(e))
 
 # ─── FOOTER ───
-st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(f"""
 <p style='text-align:center; color:{secondary_text}; font-size:14px;'>
 Made with ❤️ by a high-school senior — 100% free forever  
