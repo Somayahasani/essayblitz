@@ -6,22 +6,36 @@ from openai import OpenAI
 
 st.set_page_config(page_title="EssayBlitz v4", page_icon="⭐", layout="centered")
 
-# ─── GLOBAL CSS ───
-bg_main = "#f5f5f7"         # soft background
-card_bg = "#ffffff"          # card background
-text_color = "#1a1a1a"      # text color
-secondary_text = "#555555"
-shadow = "rgba(0,0,0,0.08)"
+# ─── THEME SELECTION ───
+theme = st.sidebar.radio("Select Theme", ["Light", "Dark"])
 
+# Define colors for a natural, modern look
+if theme == "Light":
+    bg = "#f0f2f5"          # soft off-white
+    card_bg = "#ffffff"      # white card
+    text_color = "#1e1e1e"  # dark gray
+    secondary_text = "#555555"
+    shadow = "rgba(0,0,0,0.08)"
+    button_bg = "linear-gradient(90deg, #6a11cb, #2575fc)"
+elif theme == "Dark":
+    bg = "#1b1b1b"          # soft dark gray
+    card_bg = "#252525"      # lighter than bg
+    text_color = "#e0e0e0"  # light gray
+    secondary_text = "#aaaaaa"
+    shadow = "rgba(0,0,0,0.4)"
+    button_bg = "linear-gradient(90deg, #6a11cb, #2575fc)"
+
+# ─── GLOBAL CSS ───
 st.markdown(f"""
 <style>
 body {{
-    background-color: {bg_main};
+    background-color: {bg};
     color: {text_color};
+    font-family: "Segoe UI", sans-serif;
 }}
 h1 {{
-    font-size: 60px !important;
-    font-weight: 900 !important;
+    font-size: 56px !important;
+    font-weight: 900;
     background: linear-gradient(90deg, #4A00E0, #8E2DE2);
     -webkit-background-clip: text;
     color: transparent;
@@ -38,7 +52,7 @@ h2 {{
     padding:25px;
     border-radius:18px;
     background:{card_bg};
-    box-shadow:0 4px 18px {shadow};
+    box-shadow:0 4px 20px {shadow};
     margin-bottom:20px;
 }}
 textarea {{
@@ -50,21 +64,45 @@ textarea {{
     color: {text_color} !important;
 }}
 div.stButton>button:first-child {{
-    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    background: {button_bg};
     color: white;
-    border-radius: 10px;
-    padding: 12px 0;
+    border-radius: 12px;
+    padding: 14px 0;
     font-size: 18px;
+    font-weight: 600;
     border: none;
 }}
 div.stButton>button:first-child:hover {{
-    box-shadow:0 0 12px rgba(37,117,252,0.7);
+    box-shadow:0 0 14px rgba(37,117,252,0.6);
 }}
-.bigfont {{font-size: 52px !important; font-weight: bold; text-align: center; margin: 20px;}}
-.score-good {{background: linear-gradient(90deg, #d4edda, #c3e6cb); padding:16px; border-radius:16px; margin:12px 0; border-left:6px solid #28a745; color:black !important;}}
-.score-ok {{background: linear-gradient(90deg, #fff3cd, #ffeaa7); padding:16px; border-radius:16px; margin:12px 0; border-left:6px solid #ffc107; color:black !important;}}
-.score-bad {{background: linear-gradient(90deg, #f8d7da, #f5c6cb); padding:16px; border-radius:16px; margin:12px 0; border-left:6px solid #dc3545; color:black !important;}}
-.fix {{background:{bg_main}; padding:15px; border-radius:12px; margin:8px 0; color:{text_color};}}
+.bigfont {{
+    font-size: 52px !important; 
+    font-weight: bold; 
+    text-align: center; 
+    margin: 20px;
+}}
+.score-good {{
+    background: linear-gradient(90deg, #d4edda, #c3e6cb); 
+    padding:16px; border-radius:16px; margin:12px 0; 
+    border-left:6px solid #28a745; color:black !important;
+}}
+.score-ok {{
+    background: linear-gradient(90deg, #fff3cd, #ffeaa7); 
+    padding:16px; border-radius:16px; margin:12px 0; 
+    border-left:6px solid #ffc107; color:black !important;
+}}
+.score-bad {{
+    background: linear-gradient(90deg, #f8d7da, #f5c6cb); 
+    padding:16px; border-radius:16px; margin:12px 0; 
+    border-left:6px solid #dc3545; color:black !important;
+}}
+.fix {{
+    background:{bg}; 
+    padding:15px; 
+    border-radius:12px; 
+    margin:8px 0; 
+    color:{text_color};
+}}
 </style>
 """, unsafe_allow_html=True)
 
