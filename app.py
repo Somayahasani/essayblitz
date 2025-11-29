@@ -119,27 +119,35 @@ if not api_token:
 
 client = OpenAI(api_key=api_token.strip(), base_url="https://router.huggingface.co/v1")
 
-# ─── INPUTS ───
-# ─── INPUTS ───
+# ─── INPUTS ──
 with st.container():
     st.markdown("<div class='card'>", unsafe_allow_html=True)
-    col1, col2 = st.columns([2,1])
+    col1, col2 = st.columns([2, 1])
+
+    # Placeholders — same guidance for both themes
+    essay_placeholder = "Paste your essay here… (minimum 80 words)"
+    prompt_placeholder = "e.g.\nPrompt 5: Discuss an accomplishment…\nor\nWhy Stanford?"
+
+    # Essay text area
     with col1:
-        essay_placeholder = "Paste your essay here… (minimum 80 words)" if theme == "Dark" else ""
         essay = st.text_area(
             "Your full essay",
             height=380,
-            placeholder=essay_placeholder
+            placeholder=essay_placeholder,
+            key="essay_input"
         )
+
+    # Prompt text area
     with col2:
-        prompt_placeholder = "e.g.\nPrompt 5: Discuss an accomplishment…\nor\nWhy Stanford?" if theme == "Dark" else ""
         custom_prompt = st.text_area(
             "Exact prompt you’re answering",
             height=200,
-            placeholder=prompt_placeholder
+            placeholder=prompt_placeholder,
+            key="prompt_input"
         )
         if not custom_prompt.strip():
             custom_prompt = "Free choice / no specific prompt"
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -226,4 +234,5 @@ Made with ❤️ by a high-school senior — 100% free forever
 <br>v4 • November 2025
 </p>
 """, unsafe_allow_html=True)
+
 
