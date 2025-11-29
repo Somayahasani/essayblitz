@@ -120,24 +120,28 @@ if not api_token:
 client = OpenAI(api_key=api_token.strip(), base_url="https://router.huggingface.co/v1")
 
 # ─── INPUTS ───
+# ─── INPUTS ───
 with st.container():
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     col1, col2 = st.columns([2,1])
     with col1:
+        essay_placeholder = "Paste your essay here… (minimum 80 words)" if theme == "Dark" else ""
         essay = st.text_area(
             "Your full essay",
             height=380,
-            placeholder="Paste your essay here… (minimum 80 words)"
+            placeholder=essay_placeholder
         )
     with col2:
+        prompt_placeholder = "e.g.\nPrompt 5: Discuss an accomplishment…\nor\nWhy Stanford?" if theme == "Dark" else ""
         custom_prompt = st.text_area(
             "Exact prompt you’re answering",
             height=200,
-            placeholder="e.g.\nPrompt 5: Discuss an accomplishment…\nor\nWhy Stanford?"
+            placeholder=prompt_placeholder
         )
         if not custom_prompt.strip():
             custom_prompt = "Free choice / no specific prompt"
     st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ─── HELPER FUNCTION ───
 def extract_score(text):
@@ -222,3 +226,4 @@ Made with ❤️ by a high-school senior — 100% free forever
 <br>v4 • November 2025
 </p>
 """, unsafe_allow_html=True)
+
