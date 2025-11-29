@@ -6,24 +6,13 @@ from openai import OpenAI
 
 st.set_page_config(page_title="EssayBlitz v4", page_icon="⭐", layout="centered")
 
-# ─── SOFT LIGHT/DARK THEME ───
-theme = st.sidebar.radio("Theme", ["Light", "Dark"])
-
-# Soft colors
-if theme == "Light":
-    bg_main = "#f5f5f7"         # soft grayish background
-    card_bg = "#ffffff"          # white cards
-    text_color = "#1a1a1a"       # dark gray text
-    secondary_text = "#555555"
-    shadow = "rgba(0,0,0,0.08)"
-elif theme == "Dark":
-    bg_main = "#1a1a1a"          # soft dark gray
-    card_bg = "#252525"          # slightly lighter card
-    text_color = "#eaeaea"       # light gray text
-    secondary_text = "#aaaaaa"
-    shadow = "rgba(0,0,0,0.4)"
-
 # ─── GLOBAL CSS ───
+bg_main = "#f5f5f7"         # soft background
+card_bg = "#ffffff"          # card background
+text_color = "#1a1a1a"      # text color
+secondary_text = "#555555"
+shadow = "rgba(0,0,0,0.08)"
+
 st.markdown(f"""
 <style>
 body {{
