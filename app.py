@@ -6,7 +6,7 @@ from openai import OpenAI
 
 st.set_page_config(page_title="EssayBlitz v4", page_icon="star", layout="centered")
 
-# Fixed CSS — text is now BLACK inside colored boxes
+# ────────────────────────── CSS ──────────────────────────
 st.markdown("""
 <style>
     .bigfont {font-size: 52px !important; font-weight: bold; text-align: center; margin: 20px;}
@@ -20,20 +20,17 @@ st.markdown("""
 st.markdown("<h1 style='text-align:center;'>EssayBlitz v4</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center; font-size:20px;'>Professional college essay feedback — free & beautiful</p>", unsafe_allow_html=True)
 
-# ─── API CONFIG (no user input) ───
-# The app will read the API token from environment variables when deployed.
-# Set HF_TOKEN (preferred) or OPENAI_API_KEY in your deployment secrets.
+# ────────────────────────── API CONFIG ──────────────────────────
 api_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN") or os.getenv("OPENAI_API_KEY")
 
 if not api_token:
     st.sidebar.header("API Key")
-    st.sidebar.error("No API token found in environment. Set HF_TOKEN or OPENAI_API_KEY in your deployment secrets.")
+    st.sidebar.error("No API token found. Set HF_TOKEN or OPENAI_API_KEY in the environment.")
     st.stop()
 
-# Use the HF router by default if you use Hugging Face inference.
 client = OpenAI(api_key=api_token.strip(), base_url="https://router.huggingface.co/v1")
 
-# ─── INPUTS ───
+# ────────────────────────── INPUT UI ──────────────────────────
 col1, col2 = st.columns([2, 1])
 
 with col1:
@@ -41,39 +38,30 @@ with col1:
 
 with col2:
     custom_prompt = st.text_area("Exact prompt you’re answering", height=200,
-                                 placeholder="e.g.\nPrompt 5: Discuss an accomplishment…\nor\nWhy Stanford?")
+                                 placeholder="e.g.\nPrompt 5: Discuss an accomplishment…")
     if not custom_prompt.strip():
         custom_prompt = "Free choice / no specific prompt"
 
-# Helper: safe float extraction from strings like '8.5/10' or '9/10' or just '8.5'
+
+# Score extraction helper
 def extract_score(text):
-    # try to find a number (integer or decimal) before a '/10' or standalone
     m = re.search(r"(\d+(?:\.\d+)?)\s*/\s*10", text)
-    if not m:
-        m = re.search(r"^(\d+(?:\.\d+)?)(?!.*\d)", text)
     if m:
-        try:
-            return float(m.group(1))
-        except Exception:
-            return None
-    # fallback: any number anywhere
+        return float(m.group(1))
     m = re.search(r"(\d+(?:\.\d+)?)", text)
     if m:
-        try:
-            return float(m.group(1))
-        except Exception:
-            return None
+        return float(m.group(1))
     return None
 
-# ─── BIG BUTTON ───
+
+# ────────────────────────── MAIN ACTION ──────────────────────────
 if st.button("Get Professional Feedback", type="primary", use_container_width=True):
     if len(essay.strip()) < 80:
         st.warning("Essay too short — need at least 80 words")
         st.stop()
 
-    # Helpful metadata for the user (always shown)
     word_count = len(essay.split())
-    est_minutes = max(1, math.ceil(word_count / 200))  # ~200 wpm reading speed
+    est_minutes = max(1, math.ceil(word_count / 200))
 
     with st.spinner("Top admissions officer is reading your essay…"):
         try:
@@ -82,140 +70,137 @@ if st.button("Get Professional Feedback", type="primary", use_container_width=Tr
                 temperature=0.6,
                 max_tokens=1400,
                 messages=[
-                    {"role": "system", "content": """You are a professional admissions officer.
-Return ONLY this polished, concise, user‑friendly format:
+                    {
+                        "role": "system",
+                        "content": """
+You are a professional admissions officer.
+Return ONLY the following structure:
 
 ★ OVERALL EVALUATION
-Score: X/10 → [1 clear sentence summarizing overall impression]
+Score: X/10 → [summary]
 
 ★ PROMPT CONNECTION
-Score: X/10 → [how well it answers the prompt]
+Score: X/10 → [evaluation]
 
 ★ CATEGORY BREAKDOWN
-Impact: X/10 → [short reason]
-Authenticity: X/10 → [short reason]
-Storytelling: X/10 → [short reason]
-Clarity & Flow: X/10 → [short reason]
-Writing Quality: X/10 → [short reason]
+Impact: X/10 → [reason]
+Authenticity: X/10 → [reason]
+Storytelling: X/10 → [reason]
+Clarity & Flow: X/10 → [reason]
+Writing Quality: X/10 → [reason]
 
 ★ TOP 3 FIXES
-1. [short actionable fix]
-2. [short actionable fix]
-3. [short actionable fix]
+1. ...
+2. ...
+3. ...
 
 ★ POLISHED SAMPLE PARAGRAPH
-[improved paragraph — clean and readable]
+[improved paragraph]
 
 ★ FINAL NOTE
-[a single encouraging sentence]:"""},
-
+[1 encouraging sentence]
+                        """
+                    },
                     {"role": "user", "content": f"Prompt: {custom_prompt}\n\nEssay:\n{essay}"}
                 ]
             )
+
             feedback = completion.choices[0].message.content.strip()
 
-            # ─── GORGEOUS DISPLAY (text now perfectly visible) ───
+            # ────────────────────────── OUTPUT PROCESSING ──────────────────────────
             st.success("Feedback ready!")
             st.balloons()
 
-            # show metadata to user (necessary info)
-            st.markdown(f"**Word count:** {word_count} words — **Estimated reading time:** {est_minutes} minute(s)")
-            st.caption("Note: Feedback is automated and meant to guide improvement. For submissions, always double-check originality and school-specific requirements.")
+            st.markdown(f"**Word count:** {word_count} words — **Estimated reading:** {est_minutes} min")
+            st.caption("Feedback is automated; always check for originality.")
 
-            lines = [line.rstrip() for line in feedback.split('\n')]
+            lines = [line.rstrip() for line in feedback.split("\n")]
 
-            # Overall score
-            overall_shown = False
+            # Display overall score
+            overall_score = None
             for line in lines:
-                if line.strip().startswith("OVERALL:"):
-                    score = line.split(":", 1)[1].strip()
-                    st.markdown(f"<div class='bigfont'>{score}</div>", unsafe_allow_html=True)
-                    overall_shown = True
+                if line.startswith("Score:") and "OVERALL" in "".join(lines[:5]):
+                    val = extract_score(line)
+                    if val:
+                        overall_score = val
+                        st.markdown(f"<div class='bigfont'>{val}/10</div>", unsafe_allow_html=True)
                     break
-            if not overall_shown:
-                st.warning("OVERALL score not found in model output. Displaying raw feedback below.")
 
-            # iterate and display
+            # Iterate content
             i = 0
             while i < len(lines):
                 line = lines[i].strip()
-                if not line:
+
+                # HEADERS
+                if line.startswith("★ OVERALL EVALUATION"):
+                    st.header("Overall Evaluation")
                     i += 1
                     continue
 
-                if line.startswith("ON-TOPIC:"):
-                    st.markdown(f"**{line}**")
+                if line.startswith("★ PROMPT CONNECTION"):
+                    st.header("Prompt Connection")
                     i += 1
                     continue
 
-                # SCORES block lines like 'Impact: 8.5/10 → reason'
-                if any(line.startswith(prefix) for prefix in ("Impact:", "Prompt Fit:", "Authenticity:", "Storytelling:", "Clarity:")):
-                    parts = line.split(":", 1)
+                if line.startswith("★ CATEGORY BREAKDOWN"):
+                    st.header("Category Breakdown")
+                    i += 1
+                    continue
+
+                if line.startswith("★ TOP 3 FIXES"):
+                    st.header("Top 3 Fixes")
+                    i += 1
+                    continue
+
+                if line.startswith("★ POLISHED SAMPLE PARAGRAPH"):
+                    st.header("Polished Sample Paragraph")
+                    i += 1
+                    continue
+
+                if line.startswith("★ FINAL NOTE"):
+                    st.header("Final Note")
+                    i += 1
+                    continue
+
+                # CATEGORY SCORES
+                if any(line.startswith(prefix) for prefix in ("Impact:", "Authenticity:", "Storytelling:", "Clarity", "Writing Quality")):
+                    parts = line.split("→")
                     title = parts[0].strip()
-                    rest = parts[1].strip()
-                    score_val = extract_score(rest)
+                    rest = parts[1].strip() if len(parts) > 1 else ""
+
+                    score_val = extract_score(title)
+                    if score_val is None:
+                        score_val = extract_score(rest)
+
                     if score_val is not None:
-                        # style thresholds work on floats now
-                        if score_val >= 9.0:
-                            st.markdown(f"<div class='score-good'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
-                        elif score_val >= 7.0:
-                            st.markdown(f"<div class='score-ok'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                        if score_val >= 9:
+                            box = "score-good"
+                        elif score_val >= 7:
+                            box = "score-ok"
                         else:
-                            st.markdown(f"<div class='score-bad'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                            box = "score-bad"
+                        st.markdown(f"<div class='{box}'><b>{title}</b><br>{rest}</div>", unsafe_allow_html=True)
                     else:
-                        st.markdown(f"<div class='fix'>{title}<br><b>{rest}</b></div>", unsafe_allow_html=True)
+                        st.write(line)
+
                     i += 1
                     continue
 
-                if line == "3 QUICK FIXES":
-                    st.markdown("**3 QUICK FIXES**")
-                    i += 1
-                    continue
-
-                # numbered quick fixes
-                if re.match(r"^\d+\.\s+", line):
+                # FIXES (numbered)
+                if re.match(r"^\d+\.\s", line):
                     st.markdown(f"<div class='fix'>{line}</div>", unsafe_allow_html=True)
                     i += 1
                     continue
 
-                if line.startswith("REWRITTEN PARAGRAPH:"):
-                    # collect all following lines until ONE SENTENCE OF ENCOURAGEMENT or end
-                    para_lines = []
-                    j = i + 1
-                    while j < len(lines) and not lines[j].startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
-                        para_lines.append(lines[j])
-                        j += 1
-                    para = "\n".join(para_lines).strip()
-                    if para:
-                        st.markdown("**BEST PARAGRAPH REWRITTEN**")
-                        st.markdown(f"<div style='background:#e8f4fd; padding:18px; border-radius:14px; color:black;'>{para}</div>", unsafe_allow_html=True)
-                    i = j
-                    continue
-
-                if line.startswith("ONE SENTENCE OF ENCOURAGEMENT:"):
-                    enc = line.replace("ONE SENTENCE OF ENCOURAGEMENT:", "").strip()
-                    if not enc:
-                        # maybe the sentence is on next line
-                        if i + 1 < len(lines):
-                            enc = lines[i+1].strip()
-                            i += 1
-                    st.markdown(f"<p style='text-align:center; font-size:20px; font-style:italic; color:#1e3799;'>{enc}</p>", unsafe_allow_html=True)
-                    i += 1
-                    continue
-
-                # fallback: show any other line as plain text (but avoid duplicating numbered fixes)
-                if line:
+                # PARAGRAPH BLOCK
+                if line and not line.startswith("★"):
                     st.write(line)
+
                 i += 1
 
         except Exception as e:
-            # Give actionable error info but avoid telling the user to "click again in 10 seconds"
-            st.error("An API or parsing error occurred. Check deployment secret and model output format.")
+            st.error("An API or parsing error occurred.")
             st.code(str(e))
 
 st.markdown("---")
-st.caption("Made with love by a high-school senior | 100% free forever | v4 – November 2025")
-
-
-
-
+st.caption("Made with love | v4 – November 2025")
