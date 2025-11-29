@@ -78,7 +78,37 @@ st.markdown("<h2>AI-powered essay feedback, fast & elegant</h2>", unsafe_allow_h
 # ─── LIGHT/DARK MODE TOGGLE ───
 theme = st.sidebar.radio("Theme", ["Light", "Dark"])
 if theme == "Dark":
-    st.markdown("<style>body{background:#121212; color:white;}</style>", unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+        /* Background and text */
+        .main, .block-container {
+            background-color: #121212 !important;
+            color: white !important;
+        }
+        textarea, input, .stTextInput>div>input {
+            background-color: #1e1e1e !important;
+            color: white !important;
+        }
+        .card {
+            background: #1f1f1f !important;
+            box-shadow: 0 4px 18px rgba(255,255,255,0.05);
+        }
+        .stButton>button {
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            color: white;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <style>
+        .main, .block-container { background-color:white !important; color:black !important; }
+        textarea, input, .stTextInput>div>input { background-color: #fff !important; color: black !important; }
+        .card { background: white !important; box-shadow:0 4px 18px rgba(0,0,0,0.08); }
+        .stButton>button { background: linear-gradient(90deg, #6a11cb, #2575fc); color:white; }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 # ─── API CONFIG ───
 api_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN") or os.getenv("OPENAI_API_KEY")
@@ -276,3 +306,4 @@ Made with ❤️ by a high-school senior — 100% free forever
 <br>v4 • November 2025
 </p>
 """, unsafe_allow_html=True)
+
